@@ -52,20 +52,47 @@
 	[:form#loginform] (html/append (html/html-snippet (anti-forgery-field)))
 	[:div#inboxcontent] (html/content (apply inboxcs inboxes)))
 
+(defsnippet sendemail "public/send.html"
+	[:div#sendemail]
+	[]
+	[:form#sendform] (html/append (html/html-snippet (anti-forgery-field))))
+
+(defsnippet messagepage "public/message.html"
+	[:div#message]
+	[title message date sender]
+	[:div.ictitle] (html/content title)
+	[:div.iccontent] (html/content message)
+	[:div.icdate] (html/content date)
+	[:div.icsender] (html/content sender))
+
 ;Routes
 (defroutes app-routes
   (GET "/" [] "Hello World")
   (GET "/ceritakita" []
-  	(indexpage (ceritakita)))
+  	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita))))
   (POST "/login-action" {params :params}
   	(login (:email params) (:password params) 
   		(resp/redirect "/inbox") 
   		(indexpage (ceritakita))))
   (GET "/inbox" []
   	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita))))
-  (GET "/q" [] 
-  	(apply str (db/searchinbox (session/get :username))))
-  (GET "logout" []
+  (GET "/send-email" []
+  	(validate (indexpage (sendemail)) (indexpage (ceritakita))))
+  (POST "/send-action" {params :params}
+  	(do (let [etitle (:etitle params)
+  	  		  emes (:emessage params)
+  	  		  efrom (session/get :username)
+  	  		  eto "faisal@visijurusan.com"]
+  	  		(db/sendemail efrom eto etitle emes))
+  		(validate (indexpage (sendemail)) (indexpage (ceritakita)))))
+  (GET "/message/:uuid" [uuid]
+  	(let [dat (db/searchm uuid)
+  		  emes (apply :message dat)
+  		  etitle (apply :title dat)
+  		  edate (apply :date dat)
+  		  esender (apply :sender dat)]
+  		  (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita)))))
+  (GET "/logout" []
   	(do
   		(session/clear!)
   		(resp/redirect "/")))

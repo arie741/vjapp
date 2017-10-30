@@ -7,7 +7,8 @@
                  [ring/ring-defaults "0.2.1"]
                  [lib-noir "0.9.9"]
                  [enlive "1.1.6"]
-                 [clj-postgresql "0.7.0"]]
+                 [clj-postgresql "0.7.0"]
+                 [clj-time "0.14.0"]]
   :plugins [[lein-ring "0.9.7"]]
   :ring {:handler vjapp.handler/app}
   :profiles
