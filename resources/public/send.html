@@ -1,7 +1,39 @@
 <div id="sendemail">
-	<form action="/send-action" method="POST" id="sendform">
-		<input type="text" placeholder="Judul" name="etitle">
-		<input type="text" placeholder="Message" name="emessage">
-		<button type="submit">Login</button>
-	</form>
+	<div class="nav">
+		<div class="profile"><img src="images/e0c209b155d434c77ad74340ccc19251_400x400.png" class="image-profile">
+			<div data-delay="0" class="w-dropdown">
+				<div class="dropdown-toggle w-dropdown-toggle">
+					<div class="w-icon-dropdown-toggle"></div>
+					<div class="dropdown">Willard Delwin</div>
+				</div>
+				<nav class="w-dropdown-list"><a href="/inbox" class="dropdown-link w-dropdown-link">Inbox</a><a href="#" class="dropdown-link w-dropdown-link">Logout</a></nav>
+			</div>
+		</div>
+		<div>
+			<a href="/send-email" class="button w-inline-block" >
+				<div>Tulis Pesan</div>
+			</a>
+		</div>
+	</div>
+	<div class="title">
+		<h1 class="heading">Tulis Pesan</h1>
+	</div>
+	<div class="mail-inbox">
+		<div class="form-block w-form">
+			<form action="/send-action" method="POST" id="sendform" name="email-form" data-name="Email Form" class="write-message">
+				<!--<input type="email" class="text-field w-input" maxlength="256" name="Kepada" data-name="Kepada" placeholder="Kepada" id="Kepada" required="">-->
+				<input type="text" class="text-field w-input" maxlength="256" name="etitle" data-name="Judul" placeholder="Judul" id="Judul">
+				<textarea id="Pesan" name="emessage" placeholder="Pesan" maxlength="5000" data-name="Pesan" class="text-area text-field w-input"></textarea>
+			<button type="submit" href="#" class="button red w-inline-block">
+				<div>Kirim</div>
+			</button>
+		</form>
+		<div class="w-form-done">
+			<div>Thank you! Your submission has been received!</div>
+		</div>
+		<div class="w-form-fail">
+			<div>Oops! Something went wrong while submitting the form.</div>
+		</div>
+	</div>
+</div>
 </div>

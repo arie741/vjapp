@@ -1,7 +1,20 @@
-<div id="ceritakita">
-	<form action="/login-action" method="POST" id="loginform">
-		<input type="email" placeholder="email" name="email">
-		<input type="password" placeholder="password" name="password">
-		<button type="submit">Login</button>
-	</form>
+<div class="login" id="ceritakita">
+	<div class="container-100 w-container">
+		<div class="login-card">
+			<h1 class="main-heading">Login</h1>
+			<div class="login-field w-form">
+				<form  action="/login-action" method="POST" id="loginform" name="email-form" data-name="Email Form">
+					<input type="email" class="w-input" maxlength="256" name="email" data-name="Email 4" placeholder="Alamat Email" id="Email-4" required="">
+					<input type="password" class="w-input" maxlength="256" name="password" data-name="Password 2" placeholder="Masukan Password" id="Password-2" required="">
+					<input type="submit" value="Submit" data-wait="Please wait..." class="vj-button w-button">
+				</form>
+				<div class="w-form-done">
+					<div>Thank you! Your submission has been received!</div>
+				</div>
+				<div class="w-form-fail">
+					<div>Oops! Something went wrong while submitting the form.</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>

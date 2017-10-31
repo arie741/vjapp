@@ -2,10 +2,16 @@
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
             [net.cgrand.enlive-html :refer [deftemplate defsnippet] :as html]
+            [net.cgrand.reload :as hrel]
+            [net.cgrand.jsoup :as hjsoup]
             [noir.session :as session]
             [vjapp.db :as db]
             [noir.response :as resp]
+            [hiccup.core :as hc]
             [ring.util.anti-forgery :refer [anti-forgery-field]]))
+
+(hrel/auto-reload *ns*)
+(html/set-ns-parser! hjsoup/parser)
 
 ;deftemplate
 (defn login [email pass succ fail]
@@ -23,25 +29,38 @@
 		succ
 		fail))
 
-;template
-(deftemplate indexpage "public/index.html"
-	[snippet]
-	[:div#content] (html/content snippet))
-
 ;snippet
+(defsnippet homepage "public/homepage.html"
+  [:div#homepage]
+  [])
+
+(defsnippet header "public/header.html"
+  [:div#header]
+  []
+  [:a#loginlink] (if (session/get :username)
+                  (html/set-attr :href "../logout")
+                  (html/set-attr :href "../ceritakita"))
+  [:a#loginlink] (if (session/get :username)
+                  (html/content "Logout")
+                  (html/content "Login")))
+
+(defsnippet footer "public/footer.html"
+  [:div#footer]
+  [])
+
 (defsnippet ceritakita "public/ceritakita.html"
 	[:div#ceritakita]
 	[]
 	[:form#loginform] (html/append (html/html-snippet (anti-forgery-field))))
 
 (defsnippet inboxcontent "public/inboxcontent.html"
-	[:div.inboxc]
+	[:a.inboxc]
 	[uuid title message date owner]
-	[:div.ictitle] (html/content title)
-	[:div.iccontent] (html/content message)
-	[:a.icuuid] (html/set-attr :href (str "/message/" uuid))
+	[:h2.ictitle] (html/content title)
+	[:p.iccontent] (html/content message)
+	[:a.inboxc] (html/set-attr :href (str "/message/" uuid))
 	[:div.icdate] (html/content date)
-	[:div.icsender] (html/content owner))
+	[:h2.icsender] (html/content owner))
 
 (defn inboxcs [inboxes]
 	(map #(inboxcontent (:uuid %) (:title %) (:message %) (:date %) (:sender %)) inboxes))
@@ -60,14 +79,26 @@
 (defsnippet messagepage "public/message.html"
 	[:div#message]
 	[title message date sender]
-	[:div.ictitle] (html/content title)
-	[:div.iccontent] (html/content message)
+	[:h2.ictitle] (html/content title)
+	[:p.iccontent] (html/content message)
 	[:div.icdate] (html/content date)
-	[:div.icsender] (html/content sender))
+	[:h2.icsender] (html/content sender))
+
+(defsnippet contactus "public/contactus.html"
+  [:div#contactus]
+  [])
+
+;template
+(deftemplate indexpage "public/index.html"
+  [snippet]
+  [:div#header] (html/substitute (header))
+  [:div#content] (html/content snippet)
+  [:div#footer] (html/content (footer)))
 
 ;Routes
 (defroutes app-routes
-  (GET "/" [] "Hello World")
+  (GET "/" [] 
+    (indexpage (homepage)))
   (GET "/ceritakita" []
   	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita))))
   (POST "/login-action" {params :params}
@@ -92,6 +123,10 @@
   		  edate (apply :date dat)
   		  esender (apply :sender dat)]
   		  (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita)))))
+  (GET "/contactus" []
+    (indexpage (contactus)))
+  (GET "/q" []
+    (str (loginlink)))
   (GET "/logout" []
   	(do
   		(session/clear!)
