@@ -8,6 +8,7 @@
             [vjapp.db :as db]
             [noir.response :as resp]
             [hiccup.core :as hc]
+            [clj-time.core :as t]
             [ring.util.anti-forgery :refer [anti-forgery-field]]))
 
 (hrel/auto-reload *ns*)
@@ -125,8 +126,6 @@
   		  (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita)))))
   (GET "/contactus" []
     (indexpage (contactus)))
-  (GET "/q" []
-    (str (loginlink)))
   (GET "/logout" []
   	(do
   		(session/clear!)
