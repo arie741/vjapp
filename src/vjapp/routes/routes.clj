@@ -16,14 +16,14 @@
 
 ;deftemplate
 (defn login [email pass succ fail]
-	(let [uname (db/searchu email)
-		  upass (apply :password uname)
-		  uuid  (apply :uuid uname)]
-		(if (= pass upass)
-			(do
-				(session/put! :username email)
-				succ)
-			fail)))
+	(let [uname (db/searchu email)]
+    (if (not (empty? uname))
+       (if (= pass (apply :password uname))
+           (do
+            (session/put! :username email)
+              succ)
+              fail)
+    fail)))
 
 (defn validate [succ fail]
 	(if (session/get :username)
@@ -58,8 +58,11 @@
 
 (defsnippet ceritakita "public/ceritakita.html"
 	[:div#ceritakita]
-	[]
-	[:form#loginform] (html/append (html/html-snippet (anti-forgery-field))))
+	[error]
+	[:form#loginform] (html/append (html/html-snippet (anti-forgery-field)))
+  [:div.w-form-fail] (if error
+                        (html/set-attr :style "display:block;")
+                        (html/set-attr :style "display:none;")))
 
 (defsnippet inboxcontent "public/inboxcontent.html"
 	[:a.inboxc]
@@ -82,9 +85,12 @@
 
 (defsnippet sendemail "public/send.html"
 	[:div#sendemail]
-	[]
+	[sent]
 	[:form#sendform] (html/append (html/html-snippet (anti-forgery-field)))
-  [:div.icname] (html/content (session/get :username)))
+  [:div.icname] (html/content (session/get :username))
+  [:div.w-form-done] (if sent
+                        (html/set-attr :style "display:block;")
+                        (html/set-attr :style "display:none;")))
 
 (defsnippet messagepage "public/message.html"
 	[:div#message]
@@ -111,31 +117,33 @@
   (GET "/" [] 
     (indexpage (homepage)))
   (GET "/ceritakita" []
-  	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita))))
+  	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita false))))
   (POST "/login-action" {params :params}
   	(login (:email params) (:password params) 
   		(resp/redirect "/inbox") 
-  		(indexpage (ceritakita))))
+  		(indexpage (ceritakita true))))
   (GET "/inbox" []
-  	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita))))
+  	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita false))))
   (GET "/send-email" []
-  	(validate (indexpage (sendemail)) (indexpage (ceritakita))))
+  	(validate (indexpage (sendemail false)) (indexpage (ceritakita false))))
   (POST "/send-action" {params :params}
   	(do (let [etitle (:etitle params)
   	  		  emes (:emessage params)
   	  		  efrom (session/get :username)
   	  		  eto "faisal@visijurusan.com"]
   	  		(db/sendemail efrom eto etitle emes))
-  		(validate (indexpage (sendemail)) (indexpage (ceritakita)))))
+  		(validate (indexpage (sendemail true)) (indexpage (ceritakita false)))))
   (GET "/message/:uuid" [uuid]
   	(let [dat (db/searchm uuid)
   		  emes (apply :message dat)
   		  etitle (apply :title dat)
   		  edate (apply :date dat)
   		  esender (apply :sender dat)]
-  		  (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita)))))
+  		  (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita false)))))
   (GET "/contactus" []
     (indexpage (contactus)))
+  (GET "/q" []
+    (db/searchu "faisal@visijurusan.com"))
   (GET "/logout" []
   	(do
   		(session/clear!)

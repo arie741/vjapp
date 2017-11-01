@@ -22,14 +22,14 @@
 		<div class="form-block w-form">
 			<form action="/send-action" method="POST" id="sendform" name="email-form" data-name="Email Form" class="write-message">
 				<!--<input type="email" class="text-field w-input" maxlength="256" name="Kepada" data-name="Kepada" placeholder="Kepada" id="Kepada" required="">-->
-				<input type="text" class="text-field w-input" maxlength="256" name="etitle" data-name="Judul" placeholder="Judul" id="Judul">
-				<textarea id="Pesan" name="emessage" placeholder="Pesan" maxlength="5000" data-name="Pesan" class="text-area text-field w-input"></textarea>
+				<input type="text" class="text-field w-input" maxlength="256" name="etitle" data-name="Judul" placeholder="Judul" id="Judul" required="">
+				<textarea id="Pesan" name="emessage" placeholder="Pesan" maxlength="5000" data-name="Pesan" class="text-area text-field w-input" required=""></textarea>
 			<button type="submit" href="#" class="button red w-inline-block">
 				<div>Kirim</div>
 			</button>
 		</form>
 		<div class="w-form-done">
-			<div>Thank you! Your submission has been received!</div>
+			<div>Pesan anda telah terkirim!</div>
 		</div>
 		<div class="w-form-fail">
 			<div>Oops! Something went wrong while submitting the form.</div>
