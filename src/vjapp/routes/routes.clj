@@ -71,7 +71,7 @@
 	[:p.iccontent] (html/content message)
 	[:a.inboxc] (html/set-attr :href (str "/message/" uuid))
 	[:div.icdate] (html/content date)
-	[:h2.icsender] (html/content owner))
+	[:h2.icsender] (html/content (apply :nama (db/searchu owner))))
 
 (defn inboxcs [inboxes]
 	(map #(inboxcontent (:uuid %) (:title %) (:message %) (:date %) (:sender %)) inboxes))
@@ -81,13 +81,15 @@
 	[& inboxes]
 	[:form#loginform] (html/append (html/html-snippet (anti-forgery-field)))
 	[:div#inboxcontent] (html/content (apply inboxcs inboxes))
-  [:div.icname] (html/content (str (session/get :username))))
+  [:div.icname] (if (session/get :username)
+                  (html/content (apply :nama (db/searchu (session/get :username))))
+                  (html/content "")))
 
 (defsnippet sendemail "public/send.html"
 	[:div#sendemail]
 	[sent]
 	[:form#sendform] (html/append (html/html-snippet (anti-forgery-field)))
-  [:div.icname] (html/content (session/get :username))
+  [:div.icname] (html/content (apply :nama (db/searchu (session/get :username))))
   [:div.w-form-done] (if sent
                         (html/set-attr :style "display:block;")
                         (html/set-attr :style "display:none;")))
@@ -99,7 +101,7 @@
 	[:p.iccontent] (html/content message)
 	[:div.icdate] (html/content date)
 	[:h2.icsender] (html/content sender)
-  [:div.icname] (html/content (session/get :username)))
+  [:div.icname] (html/content (apply :nama (db/searchu (session/get :username)))))
 
 (defsnippet contactus "public/contactus.html"
   [:div#contactus]
@@ -134,7 +136,7 @@
   	  		(db/sendemail efrom eto etitle emes))
   		(validate (indexpage (sendemail true)) (indexpage (ceritakita false)))))
   (GET "/message/:uuid" [uuid]
-  	(let [dat (db/searchm uuid)
+  	(let [dat (db/searchm uuid (session/get :username))
   		  emes (apply :message dat)
   		  etitle (apply :title dat)
   		  edate (apply :date dat)

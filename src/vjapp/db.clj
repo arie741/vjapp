@@ -45,5 +45,5 @@
   (jdbc/insert! dbase :inbox 
     {:owner eto :sender efrom :title etitle :message emes :uuid (str (squuid)) :date (current-time)}))
 
-(defn searchm [uuid]
-  (jdbc/query dbase [(str "select * from inbox where uuid = '" uuid "'")]))
+(defn searchm [uuid email]
+  (jdbc/query dbase [(str "select * from inbox where uuid = '" uuid "' and owner = '" email "'")]))
