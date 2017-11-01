@@ -35,6 +35,10 @@
   [:div#homepage]
   [])
 
+(defsnippet inboxlink "public/inboxlink.html"
+  [:a#inboxlink]
+  [])
+
 (defsnippet header "public/header.html"
   [:div#header]
   []
@@ -43,7 +47,10 @@
                   (html/set-attr :href "../ceritakita"))
   [:a#loginlink] (if (session/get :username)
                   (html/content "Logout")
-                  (html/content "Login")))
+                  (html/content "Login"))
+  [:a#inboxlink] (if (session/get :username)
+                      (html/substitute (inboxlink))
+                      (html/content "")))
 
 (defsnippet footer "public/footer.html"
   [:div#footer]
@@ -70,12 +77,14 @@
 	[:div#inbox]
 	[& inboxes]
 	[:form#loginform] (html/append (html/html-snippet (anti-forgery-field)))
-	[:div#inboxcontent] (html/content (apply inboxcs inboxes)))
+	[:div#inboxcontent] (html/content (apply inboxcs inboxes))
+  [:div.icname] (html/content (str (session/get :username))))
 
 (defsnippet sendemail "public/send.html"
 	[:div#sendemail]
 	[]
-	[:form#sendform] (html/append (html/html-snippet (anti-forgery-field))))
+	[:form#sendform] (html/append (html/html-snippet (anti-forgery-field)))
+  [:div.icname] (html/content (session/get :username)))
 
 (defsnippet messagepage "public/message.html"
 	[:div#message]
@@ -83,7 +92,8 @@
 	[:h2.ictitle] (html/content title)
 	[:p.iccontent] (html/content message)
 	[:div.icdate] (html/content date)
-	[:h2.icsender] (html/content sender))
+	[:h2.icsender] (html/content sender)
+  [:div.icname] (html/content (session/get :username)))
 
 (defsnippet contactus "public/contactus.html"
   [:div#contactus]
