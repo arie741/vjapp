@@ -15,6 +15,12 @@
 (html/set-ns-parser! hjsoup/parser)
 
 ;deftemplate
+
+(defn val-status [uname succ fail]
+  (if (= "admin" (apply :service (db/searchu uname)))
+    succ
+    fail))
+
 (defn login [email pass succ fail]
 	(let [uname (db/searchu email)]
     (if (not (empty? uname))
@@ -85,6 +91,21 @@
                   (html/content (apply :nama (db/searchu (session/get :username))))
                   (html/content "")))
 
+(defsnippet sendlink "public/snippets.html"
+  [:input#email-to]
+  [])
+
+(defsnippet sendemail-admin "public/send.html"
+  [:div#sendemail]
+  [sent & eto]
+  [:form#sendform] (html/prepend (sendlink))
+  [:input#email-to] (html/set-attr :value (first eto))
+  [:form#sendform] (html/append (html/html-snippet (anti-forgery-field)))
+  [:div.icname] (html/content (apply :nama (db/searchu (session/get :username))))
+  [:div.w-form-done] (if sent
+                        (html/set-attr :style "display:block;")
+                        (html/set-attr :style "display:none;")))
+
 (defsnippet sendemail "public/send.html"
 	[:div#sendemail]
 	[sent]
@@ -93,6 +114,21 @@
   [:div.w-form-done] (if sent
                         (html/set-attr :style "display:block;")
                         (html/set-attr :style "display:none;")))
+
+(defsnippet replaylink "public/snippets.html"
+  [:a#reply-btn]
+  [eto]
+  [:a#reply-btn] (html/set-attr :href (str "/reply/:" eto)))
+
+(defsnippet messagepage-admin "public/message.html"
+  [:div#message]
+  [title message date sender]
+  [:div#replay-loc] (html/substitute (replaylink sender))
+  [:h2.ictitle] (html/content title)
+  [:p.iccontent] (html/content message)
+  [:div.icdate] (html/content date)
+  [:h2.icsender] (html/content sender)
+  [:div.icname] (html/content (apply :nama (db/searchu (session/get :username)))))
 
 (defsnippet messagepage "public/message.html"
 	[:div#message]
@@ -127,21 +163,40 @@
   (GET "/inbox" []
   	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita false))))
   (GET "/send-email" []
-  	(validate (indexpage (sendemail false)) (indexpage (ceritakita false))))
+  	(validate 
+      (val-status (session/get :username)
+        (indexpage (sendemail-admin false))
+        (indexpage (sendemail false))) 
+      (indexpage (ceritakita false))))
+  (GET "/reply/:uname" [uname]
+    (val-status (session/get :username)
+      (validate (indexpage (sendemail-admin false (apply str (rest uname)))) (indexpage (ceritakita false)))
+      (validate (indexpage (sendemail false)) (indexpage (ceritakita false)))))
   (POST "/send-action" {params :params}
-  	(do (let [etitle (:etitle params)
-  	  		  emes (:emessage params)
-  	  		  efrom (session/get :username)
-  	  		  eto "faisal@visijurusan.com"]
-  	  		(db/sendemail efrom eto etitle emes))
-  		(validate (indexpage (sendemail true)) (indexpage (ceritakita false)))))
+  	(val-status (session/get :username)
+      (do 
+          (let [etitle (:etitle params)
+                emes (:emessage params)
+                efrom (session/get :username)
+                eto (:to params)]
+          (db/sendemail efrom eto etitle emes))
+          (validate (indexpage (sendemail-admin true)) (indexpage (ceritakita false))))
+      (do 
+          (let [etitle (:etitle params)
+                emes (:emessage params)
+                efrom (session/get :username)
+                eto "faisal@visijurusan.com"]
+              (db/sendemail efrom eto etitle emes))
+          (validate (indexpage (sendemail true)) (indexpage (ceritakita false))))))
   (GET "/message/:uuid" [uuid]
   	(let [dat (db/searchm uuid (session/get :username))
-  		  emes (apply :message dat)
-  		  etitle (apply :title dat)
-  		  edate (apply :date dat)
-  		  esender (apply :sender dat)]
-  		  (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita false)))))
+  		    emes (apply :message dat)
+  		    etitle (apply :title dat)
+  		    edate (apply :date dat)
+  		    esender (apply :sender dat)]
+  		    (val-status (session/get :username)
+            (validate (indexpage (messagepage-admin etitle emes edate esender)) (indexpage (ceritakita false)))
+            (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita false))))))
   (GET "/contactus" []
     (indexpage (contactus)))
   (GET "/q" []
