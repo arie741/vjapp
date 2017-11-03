@@ -11,7 +11,8 @@
                  [clj-time "0.14.0"]
                  [hiccup "1.0.5"]]
   :plugins [[lein-ring "0.9.7"]]
-  :ring {:handler vjapp.handler/app}
+  :ring {:handler vjapp.handler/app
+         :port 21238}
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                         [ring/ring-mock "0.3.0"]]}})
