@@ -77,7 +77,13 @@
 	[:p.iccontent] (html/content message)
 	[:a.inboxc] (html/set-attr :href (str "/message/" uuid))
 	[:div.icdate] (html/content date)
-	[:h2.icsender] (html/content (apply :nama (db/searchu owner))))
+	[:h2.icsender] (html/content (apply :nama (db/searchu owner)))
+  [:div.read-unread] (if (= "read" (apply :isread (db/searchinbox-uuid uuid)))
+                        (html/set-attr :class "read-unread read")
+                        (html/set-attr :class "read-unread"))
+  [:div.mail-details] (if (= "read" (apply :isread (db/searchinbox-uuid uuid)))
+                        (html/set-attr :class "mail-details read")
+                        (html/set-attr :class "mail-details")))
 
 (defn inboxcs [inboxes]
 	(map #(inboxcontent (:uuid %) (:title %) (:message %) (:date %) (:sender %)) inboxes))
@@ -95,20 +101,11 @@
   [:input#email-to]
   [])
 
-(defsnippet sendemail-admin "public/send.html"
-  [:div#sendemail]
-  [sent & eto]
-  [:form#sendform] (html/prepend (sendlink))
-  [:input#email-to] (html/set-attr :value (first eto))
-  [:form#sendform] (html/append (html/html-snippet (anti-forgery-field)))
-  [:div.icname] (html/content (apply :nama (db/searchu (session/get :username))))
-  [:div.w-form-done] (if sent
-                        (html/set-attr :style "display:block;")
-                        (html/set-attr :style "display:none;")))
-
 (defsnippet sendemail "public/send.html"
 	[:div#sendemail]
-	[sent]
+	[sent & eto]
+  [:form#sendform] (html/prepend (val-status (session/get :username) (sendlink) ""))
+  [:input#email-to] (html/set-attr :value (val-status (session/get :username) (first eto) ""))
 	[:form#sendform] (html/append (html/html-snippet (anti-forgery-field)))
   [:div.icname] (html/content (apply :nama (db/searchu (session/get :username))))
   [:div.w-form-done] (if sent
@@ -164,43 +161,34 @@
   	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita false))))
   (GET "/send-email" []
   	(validate 
-      (val-status (session/get :username)
-        (indexpage (sendemail-admin false))
-        (indexpage (sendemail false))) 
+      (indexpage (sendemail false)) 
       (indexpage (ceritakita false))))
   (GET "/reply/:uname" [uname]
     (val-status (session/get :username)
-      (validate (indexpage (sendemail-admin false (apply str (rest uname)))) (indexpage (ceritakita false)))
+      (validate (indexpage (sendemail false (apply str (rest uname)))) (indexpage (ceritakita false)))
       (validate (indexpage (sendemail false)) (indexpage (ceritakita false)))))
   (POST "/send-action" {params :params}
-  	(val-status (session/get :username)
-      (do 
-          (let [etitle (:etitle params)
-                emes (:emessage params)
-                efrom (session/get :username)
-                eto (:to params)]
+  	(do 
+      (let [etitle (:etitle params)
+            emes (:emessage params)
+            efrom (session/get :username)
+            eto (val-status (session/get :username) (:to params) "faisal@visijurusan.com")]
           (db/sendemail efrom eto etitle emes))
-          (validate (indexpage (sendemail-admin true)) (indexpage (ceritakita false))))
-      (do 
-          (let [etitle (:etitle params)
-                emes (:emessage params)
-                efrom (session/get :username)
-                eto "faisal@visijurusan.com"]
-              (db/sendemail efrom eto etitle emes))
-          (validate (indexpage (sendemail true)) (indexpage (ceritakita false))))))
+      (validate (indexpage (sendemail true)) (indexpage (ceritakita false)))))
   (GET "/message/:uuid" [uuid]
   	(let [dat (db/searchm uuid (session/get :username))
   		    emes (apply :message dat)
   		    etitle (apply :title dat)
   		    edate (apply :date dat)
-  		    esender (apply :sender dat)]
-  		    (val-status (session/get :username)
-            (validate (indexpage (messagepage-admin etitle emes edate esender)) (indexpage (ceritakita false)))
-            (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita false))))))
+  		    esender (apply :sender dat)
+          uuid (apply :uuid dat)]
+  		    (do 
+            (db/is-read uuid)
+            (val-status (session/get :username)
+                      (validate (indexpage (messagepage-admin etitle emes edate esender)) (indexpage (ceritakita false)))
+                      (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita false)))))))
   (GET "/contactus" []
     (indexpage (contactus)))
-  (GET "/q" []
-    (db/searchu "faisal@visijurusan.com"))
   (GET "/logout" []
   	(do
   		(session/clear!)

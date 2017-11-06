@@ -41,9 +41,15 @@
 (defn searchinbox [owner]
 	(jdbc/query dbase [(str "select * from inbox where owner = '" owner "'")]))
 
+(defn searchinbox-uuid [uuid]
+  (jdbc/query dbase [(str "select * from inbox where uuid = '" uuid "'")]))
+
 (defn sendemail [efrom eto etitle emes]
   (jdbc/insert! dbase :inbox 
-    {:owner eto :sender efrom :title etitle :message emes :uuid (str (squuid)) :date (current-time)}))
+    {:owner eto :sender efrom :title etitle :message emes :uuid (str (squuid)) :date (current-time) :isread "unread"}))
+
+(defn is-read [uuid]
+  (jdbc/update! dbase :inbox {:isread "read"} ["uuid = ?" uuid]))
 
 (defn searchm [uuid email]
   (jdbc/query dbase [(str "select * from inbox where uuid = '" uuid "' and owner = '" email "'")]))
