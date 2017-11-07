@@ -142,10 +142,16 @@
 
 ;template
 (deftemplate indexpage "public/index.html"
-  [snippet]
+  [snippet & datagrf]
   [:div#header] (html/substitute (header))
   [:div#content] (html/content snippet)
-  [:div#footer] (html/content (footer)))
+  [:div#footer] (html/content (footer))
+  [:html] (if (not (empty? datagrf))
+              (html/set-attr :data-wf-page "59dc7a1f92c47000010c7c4e")
+              (html/set-attr :data-wf-page ""))
+  [:html] (if (not (empty? datagrf))
+              (html/set-attr :data-wf-site "59dc43273f7a820001ca73b8")
+              (html/set-attr :data-wf-page "")))
 
 ;Routes
 (defroutes app-routes
@@ -188,7 +194,7 @@
                       (validate (indexpage (messagepage-admin etitle emes edate esender)) (indexpage (ceritakita false)))
                       (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita false)))))))
   (GET "/contactus" []
-    (indexpage (contactus)))
+    (indexpage (contactus) true))
   (GET "/logout" []
   	(do
   		(session/clear!)
