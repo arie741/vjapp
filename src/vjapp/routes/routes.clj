@@ -9,32 +9,13 @@
             [noir.response :as resp]
             [hiccup.core :as hc]
             [clj-time.core :as t]
-            [ring.util.anti-forgery :refer [anti-forgery-field]]))
+            [ring.util.anti-forgery :refer [anti-forgery-field]]
+            [vjapp.routes.helperfunctions :refer :all]
+            [vjapp.routes.inbox :refer :all]
+            [vjapp.routes.profile :refer :all]))
 
 (hrel/auto-reload *ns*)
 (html/set-ns-parser! hjsoup/parser)
-
-;deftemplate
-
-(defn val-status [uname succ fail]
-  (if (= "admin" (apply :service (db/searchu uname)))
-    succ
-    fail))
-
-(defn login [email pass succ fail]
-	(let [uname (db/searchu email)]
-    (if (not (empty? uname))
-       (if (= pass (apply :password uname))
-           (do
-            (session/put! :username email)
-              succ)
-              fail)
-    fail)))
-
-(defn validate [succ fail]
-	(if (session/get :username)
-		succ
-		fail))
 
 ;snippet
 (defsnippet homepage "public/homepage.html"
@@ -70,72 +51,6 @@
                         (html/set-attr :style "display:block;")
                         (html/set-attr :style "display:none;")))
 
-(defsnippet inboxcontent "public/inboxcontent.html"
-	[:a.inboxc]
-	[uuid title message date owner]
-	[:h2.ictitle] (html/content title)
-	[:p.iccontent] (html/content message)
-	[:a.inboxc] (html/set-attr :href (str "/message/" uuid))
-	[:div.icdate] (html/content date)
-	[:h2.icsender] (html/content (apply :nama (db/searchu owner)))
-  [:div.read-unread] (if (= "read" (apply :isread (db/searchinbox-uuid uuid)))
-                        (html/set-attr :class "read-unread read")
-                        (html/set-attr :class "read-unread"))
-  [:div.mail-details] (if (= "read" (apply :isread (db/searchinbox-uuid uuid)))
-                        (html/set-attr :class "mail-details read")
-                        (html/set-attr :class "mail-details")))
-
-(defn inboxcs [inboxes]
-	(map #(inboxcontent (:uuid %) (:title %) (:message %) (:date %) (:sender %)) inboxes))
-
-(defsnippet inboxpage "public/inbox.html"
-	[:div#inbox]
-	[& inboxes]
-	[:form#loginform] (html/append (html/html-snippet (anti-forgery-field)))
-	[:div#inboxcontent] (html/content (apply inboxcs inboxes))
-  [:div.icname] (if (session/get :username)
-                  (html/content (apply :nama (db/searchu (session/get :username))))
-                  (html/content "")))
-
-(defsnippet sendlink "public/snippets.html"
-  [:input#email-to]
-  [])
-
-(defsnippet sendemail "public/send.html"
-	[:div#sendemail]
-	[sent & eto]
-  [:form#sendform] (html/prepend (val-status (session/get :username) (sendlink) ""))
-  [:input#email-to] (html/set-attr :value (val-status (session/get :username) (first eto) ""))
-	[:form#sendform] (html/append (html/html-snippet (anti-forgery-field)))
-  [:div.icname] (html/content (apply :nama (db/searchu (session/get :username))))
-  [:div.w-form-done] (if sent
-                        (html/set-attr :style "display:block;")
-                        (html/set-attr :style "display:none;")))
-
-(defsnippet replaylink "public/snippets.html"
-  [:a#reply-btn]
-  [eto]
-  [:a#reply-btn] (html/set-attr :href (str "/reply/:" eto)))
-
-(defsnippet messagepage-admin "public/message.html"
-  [:div#message]
-  [title message date sender]
-  [:div#replay-loc] (html/substitute (replaylink sender))
-  [:h2.ictitle] (html/content title)
-  [:p.iccontent] (html/content message)
-  [:div.icdate] (html/content date)
-  [:h2.icsender] (html/content sender)
-  [:div.icname] (html/content (apply :nama (db/searchu (session/get :username)))))
-
-(defsnippet messagepage "public/message.html"
-	[:div#message]
-	[title message date sender]
-	[:h2.ictitle] (html/content title)
-	[:p.iccontent] (html/content message)
-	[:div.icdate] (html/content date)
-	[:h2.icsender] (html/content sender)
-  [:div.icname] (html/content (apply :nama (db/searchu (session/get :username)))))
-
 (defsnippet contactus "public/contactus.html"
   [:div#contactus]
   [])
@@ -161,7 +76,7 @@
   	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita false))))
   (POST "/login-action" {params :params}
   	(login (:email params) (:password params) 
-  		(resp/redirect "/inbox") 
+  		(resp/redirect "/profile") 
   		(indexpage (ceritakita true))))
   (GET "/inbox" []
   	(validate (indexpage (inboxpage (db/searchinbox (session/get :username)))) (indexpage (ceritakita false))))
@@ -193,6 +108,8 @@
             (val-status (session/get :username)
                       (validate (indexpage (messagepage-admin etitle emes edate esender)) (indexpage (ceritakita false)))
                       (validate (indexpage (messagepage etitle emes edate esender)) (indexpage (ceritakita false)))))))
+  (GET "/profile" []
+    (validate (indexpage (profilepage)) (indexpage (ceritakita false))))
   (GET "/contactus" []
     (indexpage (contactus) true))
   (GET "/logout" []
