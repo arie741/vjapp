@@ -55,6 +55,10 @@
   [:div#contactus]
   [])
 
+(defsnippet pathway "public/pathway.html"
+  [:div#pathway]
+  [])
+
 ;template
 (deftemplate indexpage "public/index.html"
   [snippet & datagrf]
@@ -112,6 +116,8 @@
     (validate (indexpage (profilepage)) (indexpage (ceritakita false))))
   (GET "/contactus" []
     (indexpage (contactus) true))
+  (GET "/pathway" []
+    (indexpage (pathway)))
   (GET "/logout" []
   	(do
   		(session/clear!)
